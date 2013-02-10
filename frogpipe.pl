@@ -138,13 +138,3 @@ system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un data/clean_dat
 system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un data/clean_data/$noHumanNoEColiJoined --al data/incremental/$noHumanYesEColiJoined -x $genomeDir/hg19 -U data/incremental/$noHumanReadsJoined -S data/sam/$joinedNoHumanNoEColiSam");
 system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc data/clean_data/$noHumanNoEColiPairs --al-conc data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/hg19 -1 data/incremental/$noHumanReadsPairsOut1 -2 data/incremental/$noHumanReadsPairsOut2 -S data/sam/$pairsNoHumanNoEColiSam");
 print "***** Finished checking for E. coli contaminants *****\n\n\n";
-
-
-
-#    Map reads to human and e. coli genomes to filter out contamination (bowtie2)
-#        Set a few environmental variables for bowtie2 (this isn't essential, but saves some typing later on):
-#            $BOWTIE2_INDEXES = directory where your genome indices live
-#            $BT2_HOME = directory where the bowtie2 binaries live (something like ~/bin/bowtie2-2.0.6
-#        Install bowtie2, and build genome indices for human/e. coli/anything else that should be filtered out (this takes a long time)
-#        bowtie2 -q Ðphred33 Ðmaxins 2000 -p 7 Ðun ~/Desktop/Frogs_nextgen/Feb8/19825_nohuman_unpaired.txt Ðal ~/Desktop/Frogs_nextgen/Feb8/19825_HUMAN_unpaired.txt Ðun-conc ~/Desktop/Frogs_nextgen/Feb8/19825_noHuman_paired.txt Ðal-conc ~/Desktop/Frogs_nextgen/Feb8/19825_HUMAN_paired.txt -x /mnt/Data1/human_genome/hg19 {-1 ~/Desktop/Frogs_nextgen/Feb8/19825_notCombined_1.fastq -2 ~/Desktop/Frogs_nextgen/Feb8/19825_notCombined_2.fastq | -U ~/Desktop/Frogs_nextgen/Feb8/19825_Combined.fastq}
-#            The above command uses 7 threads (so make sure you have 8 cores, or else set this to 3 or 4), a maximum fragment length of 2000 (which is a lot higher than their default value),
