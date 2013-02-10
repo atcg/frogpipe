@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 
-#frogpipe.pl, by Evan McCartney-Melstad (evanmelstad@ucla.edu)
-#February 9, 2013
+# frogpipe.pl, by Evan McCartney-Melstad (evanmelstad@ucla.edu)
+# February 9, 2013
 
-#See http://biologytomorrow.com/wiki/doku.php?id=shaffer:frogs for a description
-#of what this pipeline is actually doing
+# See http://biologytomorrow.com/wiki/doku.php?id=shaffer:frogs for a description
+# of what this pipeline is actually doing
 
-#Usage: perl frogpipe.pl -a adapterSequences.fasta -f 19825_S1_L001_R1_001.fastq -r 19825_S1_L001_R2_001.fastq -s 19825
+# Usage: perl frogpipe.pl -a adapterSequences.fasta -f 19825_S1_L001_R1_001.fastq -r 19825_S1_L001_R2_001.fastq -s 19825
 
 use strict;
 use warnings;
@@ -23,38 +23,43 @@ GetOptions ( "a=s" => \$adapterFile,
              "r=s" => \$fastqR,
              "s=s" => \$sampleID);
 
-if ($adapterFile eq '') {
+if (!defined $adapterFile) {
     print "Must supply fasta file with adapter sequence(s).\n";
     die "$usage";
-} elsif ($fastqF eq '') {
+} elsif (!defined $fastqF) {
     print "Must supply forward fastq file.\n";
     die "$usage";
-} elsif ($fastqR eq '') {
+} elsif (!defined $fastqR) {
     print "Must supply reverse fastq file. \n";
     die "$usage";
-} elsif ($sampleID eq '') {
+} elsif (!defined $sampleID) {
     print "Must supply sample identifier.\n";
     die "$usage";
 }
 
-#Run Scythe (https://github.com/ucdavis-bioinformatics/scythe)
-#Usage: scythe -a adapter_file.fasta sequence_file.fastq
+my $logFileName = $sampleID . "_log.txt";
+open(my $logFile, ">>", $logFileName) or die "Couldn't open logfile: $!";
+
+## Run Scythe (https://github.com/ucdavis-bioinformatics/scythe)
+## Usage: scythe -a adapter_file.fasta sequence_file.fastq
 my $scytheOutputF = $fastqF . "_scythed";
 my $scytheOutputR = $fastqR . "_scythed";
-system("scythe -a $adapterFile -q sanger -o $scytheOutputF $fastqF");
-system("scythe -a $adapterFile -q sanger -o $scytheOutputR $fastqR");
+system("~/bin/scythe/scythe -a $adapterFile -q sanger -o $scytheOutputF $fastqF");
+system("~/bin/scythe/scythe -a $adapterFile -q sanger -o $scytheOutputR $fastqR");
 
-#Run Sickle (https://github.com/ucdavis-bioinformatics/sickle)
-#Usage: sickle pe -f <paired-end fastq file 1> -r <paired-end fastq file 2> -t <quality type> -o <trimmed pe file 1> -p <trimmed pe file 2> -s <trimmed singles file>
+
+# Run Sickle (https://github.com/ucdavis-bioinformatics/sickle)
+# Usage: sickle pe -f <paired-end fastq file 1> -r <paired-end fastq file 2> -t <quality type> -o <trimmed pe file 1> -p <trimmed pe file 2> -s <trimmed singles file>
 my $sickleOutputPE_1 = $scytheOutputF . "_sickled";
 my $sickleOutputPE_2 = $scytheOutputR . "_sickled";
 my $sickleOutputSingles = $sampleID . "_scythed_sickled_singletons";
-system("sickle pe -f $scytheOutputF -r $scytheOutputR -t sanger -o $sickleOutputPE_1 -p $sickleOutputPE_2 -s $sickleOutputSingles");
+system("~/bin/sickle/sickle pe -f $scytheOutputF -r $scytheOutputR -q 30 -n -t sanger -o $sickleOutputPE_1 -p $sickleOutputPE_2 -s $sickleOutputSingles");
 
-#    Merge reads in case the fragment was > 2 times read length (and they overlap): http://ccb.jhu.edu/software/FLASH/
-#        (Creates histogram of read lengths. For sample 19825, approximately 50% of reads overlapped (indicating fragments less than 500bp)).
-
-
+# Merge reads in case the fragment was > 2 times read length (and they overlap):   
+# Usage: flash <mates1.fastq> <mates2.fastq> [options]
+# (Creates histogram of read lengths. For sample 19825, approximately 50% of reads overlapped (indicating fragments less than 500bp)).
+#Something wrong with this setup below--not sure what yet
+system("~/bin/FLASH_v1.0.3/flash $sickleOutputPE_1 $sickleOutputPE_2 -m 10 -M 150 -x .1 -p 33 -o flashed -r 150 -f 750 -s 100");
 
 
 
