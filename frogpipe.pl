@@ -60,6 +60,12 @@ print "***** Second fastq file: $fastqR *****\n";
 print "***** Sample identifier: $sampleID *****\n\n\n\n";
 
 
+
+#Remove redundant and low-complexity reads (while maintaining the integrity of mate pairs)
+
+
+
+
 ## Run Scythe (https://github.com/ucdavis-bioinformatics/scythe)
 ## Usage: scythe -a adapter_file.fasta sequence_file.fastq
 print "***** Running Scythe on each fastq file to clean up 3' ends for adapter contaminants *****\n";
@@ -138,3 +144,7 @@ system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un data/clean_dat
 system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un data/clean_data/$noHumanNoEColiJoined --al data/incremental/$noHumanYesEColiJoined -x $genomeDir/hg19 -U data/incremental/$noHumanReadsJoined -S data/sam/$joinedNoHumanNoEColiSam");
 system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc data/clean_data/$noHumanNoEColiPairs --al-conc data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/hg19 -1 data/incremental/$noHumanReadsPairsOut1 -2 data/incremental/$noHumanReadsPairsOut2 -S data/sam/$pairsNoHumanNoEColiSam");
 print "***** Finished checking for E. coli contaminants *****\n\n\n";
+
+
+#de novo assembly of reads into contigs
+#Abyss
