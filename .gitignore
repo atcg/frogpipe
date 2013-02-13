@@ -16,5 +16,5 @@ nytprof.out
 pm_to_blib
 *.fastq
 data/
-adapters.fasta
+adapters*
 \.DS_Store
