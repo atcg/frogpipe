@@ -18,3 +18,5 @@ pm_to_blib
 data/
 adapters.fasta
 \.DS_Store
+targets.fasta
+*.log
