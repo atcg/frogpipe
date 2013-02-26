@@ -20,4 +20,4 @@ data/
 targets.fasta
 *.log
 adapters*
-
+coverage.hist
