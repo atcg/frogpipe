@@ -92,7 +92,7 @@ my $fastq_join_Output1 = $fastq_join_Output_Prefix . ".un1.fastq"; #this file wi
 my $fastq_join_Output2 = $fastq_join_Output_Prefix . ".un2.fastq"; #this file will be created below by fastq-join
 my $fastq_join_Output_JOINED = $fastq_join_Output_Prefix . ".join.fastq"; #this file will be created below by fastq-join
 print "***** Running fastq-join on paired end files to merge overlapping paired-end reads (in case some fragments were shorter than 2x read length) *****\n";
-system("~/bin/ea-utils.1.1.2-537/fastq-join data/incremental/$sickleOutputPE_1 data//incremental/$sickleOutputPE_2 -o data/incremental/$fastq_join_Output_Prefix.%.fastq -m 15 -p 1");
+system("~/bin/ea-utils/fastq-join data/incremental/$sickleOutputPE_1 data/incremental/$sickleOutputPE_2 -o data/incremental/$fastq_join_Output_Prefix.%.fastq -m 15 -p 1");
 print "***** Fastq-join finished running *****\n\n\n";
 
 #So at this point, we have several useful QC'ed files (filenames below assume usage example from line 9 above).
@@ -140,9 +140,9 @@ system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-m
 print "***** Finished checking for human contaminants *****\n\n\n";
 
 print "***** Checking to see if reads align to the E. coli genome to remove contaminants *****\n";
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un data/clean_data/$noHumanNoEColiSingles --al data/incremental/$noHumanYesEColiSingles -x $genomeDir/hg19 -U data/incremental/$noHumanReadsSingles -S data/sam/$singlesNoHumanNoEColiSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un data/clean_data/$noHumanNoEColiJoined --al data/incremental/$noHumanYesEColiJoined -x $genomeDir/hg19 -U data/incremental/$noHumanReadsJoined -S data/sam/$joinedNoHumanNoEColiSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc data/clean_data/$noHumanNoEColiPairs --al-conc data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/hg19 -1 data/incremental/$noHumanReadsPairsOut1 -2 data/incremental/$noHumanReadsPairsOut2 -S data/sam/$pairsNoHumanNoEColiSam");
+system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un data/clean_data/$noHumanNoEColiSingles --al data/incremental/$noHumanYesEColiSingles -x $genomeDir/ecoliK12 -U data/incremental/$noHumanReadsSingles -S data/sam/$singlesNoHumanNoEColiSam");
+system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un data/clean_data/$noHumanNoEColiJoined --al data/incremental/$noHumanYesEColiJoined -x $genomeDir/ecoliK12 -U data/incremental/$noHumanReadsJoined -S data/sam/$joinedNoHumanNoEColiSam");
+system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc data/clean_data/$noHumanNoEColiPairs --al-conc data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/ecoliK12 -1 data/incremental/$noHumanReadsPairsOut1 -2 data/incremental/$noHumanReadsPairsOut2 -S data/sam/$pairsNoHumanNoEColiSam");
 print "***** Finished checking for E. coli contaminants *****\n\n\n";
 
 
