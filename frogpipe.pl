@@ -58,8 +58,14 @@ unless(-d "$pipeDir/data/sam") {
 unless(-d "$pipeDir/data/incremental") {
     mkdir "$pipeDir/data/incremental" or die "can't mkdir $pipeDir/data/incremental: $!";
 }
-unless(-d "$pipeDir/data/ABYSS") {
-    mkdir "$pipeDir/data/ABYSS" or die "can't mkdir $pipeDir/data/ABYSS: $!";
+#unless(-d "$pipeDir/data/ABYSS") {
+#    mkdir "$pipeDir/data/ABYSS" or die "can't mkdir $pipeDir/data/ABYSS: $!";
+#}
+unless(-d "$pipeDir/data/clean_data/velvet") {
+    mkdir "$pipeDir/data/clean_data/velvet" or die "can't mkdir $pipeDir/data/clean_data/velvet: $!";
+}
+unless(-d "$pipeDir/data/clean_data/blast") {
+    mkdir "$pipeDir/data/clean_data/blast" or die "can't mkdir $pipeDir/data/clean_data/blast: $!";
 }
 
 print '***** frogpipe.pl, by Evan McCartney-Melstad (evanmelstad@ucla.edu) *****' . "\n";
@@ -159,44 +165,61 @@ my $joinedQCed = $sampleID . "scythed_sickled_nohuman_noecoli_combined_joined_an
 system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_data/$noHumanNoEColiJoined > $pipeDir/data/clean_data/$joinedQCed");
 
 
-#de novo assembly of reads into contigs using Abyss
-#This section is based on a script by Mark Phuong
-print "***** Revising sequence deflines for input into Abyss *****\n";
-my @abyssFiles = ("$pipeDir/data/clean_data/$joinedQCed", "$pipeDir/data/clean_data/$$noHumanNoEColiOut1", "$pipeDir/data/clean_data/$$noHumanNoEColiOut2");
+#de novo assembly of reads into contigs using velvet
+print "***** Running de novo assembly of reads using velvet *****.\n";
 
-foreach my $fileToRename (@abyssFiles) {
-    open (my $fastqFH, "<", "$fileToRename") || die "Couldn't open file: $!.";
-    open (my $fastqFH_Abyss, ">", "$fileToRename" . "_Abyss") || die "Couldn't open file: $!";
-    while (my $line = <$fastqFH>) {
-        if ($line =~ /\s\d:N:\d:\d$/) {
-        $line =~ s/\s\d:N:\d:\d$/\/1/;
-        }
-        print $fastqFH_Abyss $line;
-    }
-    close ($fastqFH);
-    close ($fastqFH_Abyss);
-}
+system("velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
+system("velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto");
+print "***** Finished running velvet *****.\n\n\n";
 
-#So we now have three output files:
-my $abyssPE1 = $noHumanNoEColiOut1 . "_Abyss";
-my $abyssPE2 = $noHumanNoEColiOut2 . "_Abyss";
-my $abyssSE = $joinedQCed . "_Abyss";
+#blasting between baits and velvet-assembled contigs
+my $contigsName = $sampleID . "_contigs";
+my $blastResults = $sampleID . "_baits_blasted_to_velvetContigs.txt";
+system("makeblastdb -in $pipeDir/data/clean_data/velvet/contigs.fa -dbtype nucl -title $contigsName -out $pipeDir/data/clean_data/blast/$contigsName");
+system("blastn -db $pipeDir/data/clean_data/blast/$contigsName -query singles.fasta -out $pipeDir/data/clean_data/blast/$blastResults");
 
 
-print "***** Running de novo assembly of reads using multiple kmer and c and e values in Abyss *****.\n";
 
-my @abysskmer = qw(21 31 41 51 61);
-my @cevalue = qw(10 20);
 
-foreach my $kmer (@abysskmer) {
-    foreach my $ce (@cevalue) {
-        print "***** Running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n";
-        my $outfile = $sampleID . "_kmer" . $kmer . "_ce" . $ce;
-        print "Command = abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'\n\n";
-        system("abyss-pe np=4 name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'");
-        print "***** Finished running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n\n"
-    }
-}
+
+#########de novo assembly of reads into contigs using Abyss
+#########This section is based on a script by Mark Phuong
+########print "***** Revising sequence deflines for input into Abyss *****\n";
+########my @abyssFiles = ("$pipeDir/data/clean_data/$joinedQCed", "$pipeDir/data/clean_data/$$noHumanNoEColiOut1", "$pipeDir/data/clean_data/$$noHumanNoEColiOut2");
+########
+########foreach my $fileToRename (@abyssFiles) {
+########    open (my $fastqFH, "<", "$fileToRename") || die "Couldn't open file: $!.";
+########    open (my $fastqFH_Abyss, ">", "$fileToRename" . "_Abyss") || die "Couldn't open file: $!";
+########    while (my $line = <$fastqFH>) {
+########        if ($line =~ /\s\d:N:\d:\d$/) {
+########        $line =~ s/\s\d:N:\d:\d$/\/1/;
+########        }
+########        print $fastqFH_Abyss $line;
+########    }
+########    close ($fastqFH);
+########    close ($fastqFH_Abyss);
+########}
+########
+#########So we now have three output files:
+########my $abyssPE1 = $noHumanNoEColiOut1 . "_Abyss";
+########my $abyssPE2 = $noHumanNoEColiOut2 . "_Abyss";
+########my $abyssSE = $joinedQCed . "_Abyss";
+########
+########
+########print "***** Running de novo assembly of reads using multiple kmer and c and e values in Abyss *****.\n";
+########
+########my @abysskmer = qw(21 31 41 51 61);
+########my @cevalue = qw(10 20);
+########
+########foreach my $kmer (@abysskmer) {
+########    foreach my $ce (@cevalue) {
+########        print "***** Running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n";
+########        my $outfile = $sampleID . "_kmer" . $kmer . "_ce" . $ce;
+########        print "Command = abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'\n\n";
+########        system("abyss-pe np=4 name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'");
+########        print "***** Finished running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n\n"
+########    }
+########}
 
 #Code below by Mark shows how he cleans up extraneous files
 ####foreach my $kmer (@abysskmer) {
