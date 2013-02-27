@@ -149,9 +149,9 @@ system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-m
 print "***** Finished checking for human contaminants *****\n\n\n";
 
 print "***** Checking to see if reads align to the E. coli genome to remove contaminants *****\n";
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiSingles --al $pipeDir/data/incremental/$noHumanYesEColiSingles -x $genomeDir/ecoli -U $pipeDir/data/incremental/$noHumanReadsSingles -S $pipeDir/data/sam/$singlesNoHumanNoEColiSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiJoined --al $pipeDir/data/incremental/$noHumanYesEColiJoined -x $genomeDir/ecoli -U $pipeDir/data/incremental/$noHumanReadsJoined -S $pipeDir/data/sam/$joinedNoHumanNoEColiSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc $pipeDir/data/clean_data/$noHumanNoEColiPairs --al-conc $pipeDir/data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/ecoli -1 $pipeDir/data/incremental/$noHumanReadsPairsOut1 -2 $pipeDir/data/incremental/$noHumanReadsPairsOut2 -S $pipeDir/data/sam/$pairsNoHumanNoEColiSam");
+system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiSingles --al $pipeDir/data/incremental/$noHumanYesEColiSingles -x $genomeDir/ecoliK12 -U $pipeDir/data/incremental/$noHumanReadsSingles -S $pipeDir/data/sam/$singlesNoHumanNoEColiSam");
+system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiJoined --al $pipeDir/data/incremental/$noHumanYesEColiJoined -x $genomeDir/ecoliK12 -U $pipeDir/data/incremental/$noHumanReadsJoined -S $pipeDir/data/sam/$joinedNoHumanNoEColiSam");
+system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc $pipeDir/data/clean_data/$noHumanNoEColiPairs --al-conc $pipeDir/data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/ecoliK12 -1 $pipeDir/data/incremental/$noHumanReadsPairsOut1 -2 $pipeDir/data/incremental/$noHumanReadsPairsOut2 -S $pipeDir/data/sam/$pairsNoHumanNoEColiSam");
 print "***** Finished checking for E. coli contaminants *****\n\n\n";
 
 
@@ -174,7 +174,7 @@ foreach my $kmer (@abysskmer) {
         print "***** Running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n";
         my $outfile = $sampleID . "_kmer" . $kmer . "_ce" . $ce;
         print "Command = abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer n=10 c=$ce e=$ce in='$pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' se='$pipeDir/data/clean_data/$joinedQCed'\n\n";
-        system("abyss-pe np=4 name=$pipeDir/data/ABYSS/$outfile k=$kmer n=10 c=$ce e=$ce in='$pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' se='$pipeDir/data/clean_data/$joinedQCed'");
+        system("abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer n=10 c=$ce e=$ce in='$pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' se='$pipeDir/data/clean_data/$joinedQCed'");
         print "***** Finished running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n\n"
     }
     
