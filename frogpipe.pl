@@ -154,32 +154,48 @@ system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/
 system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc $pipeDir/data/clean_data/$noHumanNoEColiPairs --al-conc $pipeDir/data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/ecoliK12 -1 $pipeDir/data/incremental/$noHumanReadsPairsOut1 -2 $pipeDir/data/incremental/$noHumanReadsPairsOut2 -S $pipeDir/data/sam/$pairsNoHumanNoEColiSam");
 print "***** Finished checking for E. coli contaminants *****\n\n\n";
 
-
-#de novo assembly of reads into contigs using Abyss
-#This section is based on a script by Mark Phuong
-print "***** Running de novo assembly of reads using multiple kmer and c and e values in Abyss *****.\n";
-
-my @abysskmer = qw(21 31 41 51 61);
-my @cevalue = qw(10 20);
-
 #merge joined and singleton reads into a single file
 my $joinedQCed = $sampleID . "scythed_sickled_nohuman_noecoli_combined_joined_and_singletons.fastq";
 system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_data/$noHumanNoEColiJoined > $pipeDir/data/clean_data/$joinedQCed");
 
 
+#de novo assembly of reads into contigs using Abyss
+#This section is based on a script by Mark Phuong
+print "***** Revising sequence deflines for input into Abyss *****\n";
+my @abyssFiles = ("$pipeDir/data/clean_data/$joinedQCed", "$pipeDir/data/clean_data/$$noHumanNoEColiOut1", "$pipeDir/data/clean_data/$$noHumanNoEColiOut2");
 
-###################
+foreach my $fileToRename (@abyssFiles) {
+    open (my $fastqFH, "<", "$fileToRename") || die "Couldn't open file: $!.";
+    open (my $fastqFH_Abyss, ">", "$fileToRename" . "_Abyss") || die "Couldn't open file: $!";
+    while (my $line = <$fastqFH>) {
+        if ($line =~ /\s\d:N:\d:\d$/) {
+        $line =~ s/\s\d:N:\d:\d$/\/1/;
+        }
+        print $fastqFH_Abyss $line;
+    }
+    close ($fastqFH);
+    close ($fastqFH_Abyss);
+}
+
+#So we now have three output files:
+my $abyssPE1 = $noHumanNoEColiOut1 . "_Abyss";
+my $abyssPE2 = $noHumanNoEColiOut2 . "_Abyss";
+my $abyssSE = $joinedQCed . "_Abyss";
+
+
+print "***** Running de novo assembly of reads using multiple kmer and c and e values in Abyss *****.\n";
+
+my @abysskmer = qw(21 31 41 51 61);
+my @cevalue = qw(10 20);
+
 foreach my $kmer (@abysskmer) {
     foreach my $ce (@cevalue) {
         print "***** Running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n";
         my $outfile = $sampleID . "_kmer" . $kmer . "_ce" . $ce;
-        print "Command = abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer n=10 c=$ce e=$ce in='$pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' se='$pipeDir/data/clean_data/$joinedQCed'\n\n";
-        system("abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer n=10 c=$ce e=$ce in='$pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' se='$pipeDir/data/clean_data/$joinedQCed'");
+        print "Command = abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'\n\n";
+        system("abyss-pe np=4 name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'");
         print "***** Finished running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n\n"
     }
-    
-    
-    
 }
 
 #Code below by Mark shows how he cleans up extraneous files
