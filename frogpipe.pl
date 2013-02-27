@@ -8,6 +8,18 @@
 
 # Usage: perl frogpipe.pl -a adapterSequences.fasta -f 19825_S1_L001_R1_001.fastq -r 19825_S1_L001_R2_001.fastq -s 19825
 
+#Dependencies:
+#   -AMOS (http://sourceforge.net/projects/amos/)
+#   -velvet
+#   -sickle
+#   -scythe
+#   -blast+
+
+#To do:
+#   -remove duplicate reads (?)
+#   -remove low complexity reads
+
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -169,16 +181,26 @@ system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_
 print "***** Running de novo assembly of reads using velvet *****.\n";
 
 system("velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
-system("velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto");
+system("velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
 print "***** Finished running velvet *****.\n\n\n";
 
+#Get some read depth summary stats from AMOS
+print "***** Generating summary statistics for read depth using AMOS *****.\n";
+my $AMOS_file = "velvet_asm.afg"; #This is automatically created by the
+my $BNK_file = $sampleID . ".bnk";
+system("bank-transact -m $pipeDir/data/clean_data/velvet/$AMOS_file -b $pipeDir/data/clean_data/velvet/$BNK_file -c");
+system("analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d");
+#system("analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d"); #this would give coverage for each contigs
+print "***** Finished generating summary statistics for read depth using AMOS *****.\n\n\n";
+
+
 #blasting between baits and velvet-assembled contigs
+print "***** Blasting targets against assembled contigs *****.\n";
 my $contigsName = $sampleID . "_contigs";
 my $blastResults = $sampleID . "_baits_blasted_to_velvetContigs.txt";
 system("makeblastdb -in $pipeDir/data/clean_data/velvet/contigs.fa -dbtype nucl -title $contigsName -out $pipeDir/data/clean_data/blast/$contigsName");
 system("blastn -db $pipeDir/data/clean_data/blast/$contigsName -query singles.fasta -out $pipeDir/data/clean_data/blast/$blastResults");
-
-
+print "***** Finished blasting targets against assembled contigs *****.\n\n\n";
 
 
 
