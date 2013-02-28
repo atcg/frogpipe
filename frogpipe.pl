@@ -18,6 +18,7 @@
 #To do:
 #   -remove duplicate reads (?)
 #   -remove low complexity reads
+#   -make sure ea-utils is in ea-utils folder
 
 
 use strict;
@@ -180,16 +181,16 @@ system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_
 #de novo assembly of reads into contigs using velvet
 print "***** Running de novo assembly of reads using velvet *****.\n";
 
-system("velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
-system("velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
+system("~/bin/velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
+system("~/bin/velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
 print "***** Finished running velvet *****.\n\n\n";
 
 #Get some read depth summary stats from AMOS
 print "***** Generating summary statistics for read depth using AMOS *****.\n";
 my $AMOS_file = "velvet_asm.afg"; #This is automatically created by the
 my $BNK_file = $sampleID . ".bnk";
-system("bank-transact -m $pipeDir/data/clean_data/velvet/$AMOS_file -b $pipeDir/data/clean_data/velvet/$BNK_file -c");
-system("analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d");
+system("~/bin/amos-3.1.0/bin/bank-transact -m $pipeDir/data/clean_data/velvet/$AMOS_file -b $pipeDir/data/clean_data/velvet/$BNK_file -c");
+system("~/bin/amos-3.1.0/bin/analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d");
 #system("analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d"); #this would give coverage for each contigs
 print "***** Finished generating summary statistics for read depth using AMOS *****.\n\n\n";
 
