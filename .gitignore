@@ -21,3 +21,4 @@ targets.fasta
 *.log
 adapters*
 coverage.hist
+singles.fasta

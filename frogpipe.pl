@@ -8,6 +8,19 @@
 
 # Usage: perl frogpipe.pl -a adapterSequences.fasta -f 19825_S1_L001_R1_001.fastq -r 19825_S1_L001_R2_001.fastq -s 19825
 
+#Dependencies:
+#   -AMOS (http://sourceforge.net/projects/amos/)
+#   -velvet
+#   -sickle
+#   -scythe
+#   -blast+
+
+#To do:
+#   -remove duplicate reads (?)
+#   -remove low complexity reads
+#   -make sure ea-utils is in ea-utils folder
+
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -58,8 +71,14 @@ unless(-d "$pipeDir/data/sam") {
 unless(-d "$pipeDir/data/incremental") {
     mkdir "$pipeDir/data/incremental" or die "can't mkdir $pipeDir/data/incremental: $!";
 }
-unless(-d "$pipeDir/data/ABYSS") {
-    mkdir "$pipeDir/data/ABYSS" or die "can't mkdir $pipeDir/data/ABYSS: $!";
+#unless(-d "$pipeDir/data/ABYSS") {
+#    mkdir "$pipeDir/data/ABYSS" or die "can't mkdir $pipeDir/data/ABYSS: $!";
+#}
+unless(-d "$pipeDir/data/clean_data/velvet") {
+    mkdir "$pipeDir/data/clean_data/velvet" or die "can't mkdir $pipeDir/data/clean_data/velvet: $!";
+}
+unless(-d "$pipeDir/data/clean_data/blast") {
+    mkdir "$pipeDir/data/clean_data/blast" or die "can't mkdir $pipeDir/data/clean_data/blast: $!";
 }
 
 print '***** frogpipe.pl, by Evan McCartney-Melstad (evanmelstad@ucla.edu) *****' . "\n";
@@ -149,9 +168,9 @@ system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-m
 print "***** Finished checking for human contaminants *****\n\n\n";
 
 print "***** Checking to see if reads align to the E. coli genome to remove contaminants *****\n";
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiSingles --al $pipeDir/data/incremental/$noHumanYesEColiSingles -x $genomeDir/ecoli -U $pipeDir/data/incremental/$noHumanReadsSingles -S $pipeDir/data/sam/$singlesNoHumanNoEColiSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiJoined --al $pipeDir/data/incremental/$noHumanYesEColiJoined -x $genomeDir/ecoli -U $pipeDir/data/incremental/$noHumanReadsJoined -S $pipeDir/data/sam/$joinedNoHumanNoEColiSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc $pipeDir/data/clean_data/$noHumanNoEColiPairs --al-conc $pipeDir/data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/ecoli -1 $pipeDir/data/incremental/$noHumanReadsPairsOut1 -2 $pipeDir/data/incremental/$noHumanReadsPairsOut2 -S $pipeDir/data/sam/$pairsNoHumanNoEColiSam");
+system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiSingles --al $pipeDir/data/incremental/$noHumanYesEColiSingles -x $genomeDir/ecoliK12 -U $pipeDir/data/incremental/$noHumanReadsSingles -S $pipeDir/data/sam/$singlesNoHumanNoEColiSam");
+system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiJoined --al $pipeDir/data/incremental/$noHumanYesEColiJoined -x $genomeDir/ecoliK12 -U $pipeDir/data/incremental/$noHumanReadsJoined -S $pipeDir/data/sam/$joinedNoHumanNoEColiSam");
+system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc $pipeDir/data/clean_data/$noHumanNoEColiPairs --al-conc $pipeDir/data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/ecoliK12 -1 $pipeDir/data/incremental/$noHumanReadsPairsOut1 -2 $pipeDir/data/incremental/$noHumanReadsPairsOut2 -S $pipeDir/data/sam/$pairsNoHumanNoEColiSam");
 print "***** Finished checking for E. coli contaminants *****\n\n\n";
 
 #merge joined and singleton reads into a single file
@@ -159,57 +178,72 @@ my $joinedQCed = $sampleID . "scythed_sickled_nohuman_noecoli_combined_joined_an
 system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_data/$noHumanNoEColiJoined > $pipeDir/data/clean_data/$joinedQCed");
 
 
-#de novo assembly of reads into contigs using Abyss
-#This section is based on a script by Mark Phuong
-print "***** Revising sequence deflines for input into Abyss *****\n";
-my @abyssFiles = ("$pipeDir/data/clean_data/$joinedQCed", "$pipeDir/data/clean_data/$noHumanNoEColiOut1");
+#de novo assembly of reads into contigs using velvet
+print "***** Running de novo assembly of reads using velvet *****.\n";
 
-foreach my $fileToRename (@abyssFiles) {
-    open (my $fastqFH, "<", "$fileToRename") || die "Couldn't open file: $!.";
-    open (my $fastqFH_Abyss, ">", "$fileToRename" . "_Abyss") || die "Couldn't open file: $!";
-    
-    while (my $line = <$fastqFH>) {
-        if ($line =~ /\s\d:N:\d:\d$/) {
-        $line =~ s/\s\d:N:\d:\d$/\/1/;
-        }
-        print $fastqFH_Abyss $line;
-    }
-    close ($fastqFH);
-    close ($fastqFH_Abyss);
-}
+system("~/bin/velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
+system("~/bin/velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
+print "***** Finished running velvet *****.\n\n\n";
 
-open (my $fastq2FH, "<", "$pipeDir/data/clean_data/$noHumanNoEColiOut2") || die "Couldn't open file: $!.";
-open (my $fastq2FH_Abyss, ">", "$pipeDir/data/clean_data/$noHumanNoEColiOut2" . "_Abyss") || die "Couldn't open file: $!";
-while (my $line = <$fastq2FH>) {
-    if ($line =~ /\s\d:N:\d:\d$/) {
-    $line =~ s/\s\d:N:\d:\d$/\/2/;
-    }
-    print $fastq2FH_Abyss $line;
-}
-close ($fastq2FH);
-close ($fastq2FH_Abyss);
+#Get some read depth summary stats from AMOS
+print "***** Generating summary statistics for read depth using AMOS *****.\n";
+my $AMOS_file = "velvet_asm.afg"; #This is automatically created by the
+my $BNK_file = $sampleID . ".bnk";
+system("~/bin/amos-3.1.0/bin/bank-transact -m $pipeDir/data/clean_data/velvet/$AMOS_file -b $pipeDir/data/clean_data/velvet/$BNK_file -c");
+system("~/bin/amos-3.1.0/bin/analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d");
+#system("analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d"); #this would give coverage for each contigs
+print "***** Finished generating summary statistics for read depth using AMOS *****.\n\n\n";
 
 
-#So we now have three output files:
-my $abyssPE1 = $noHumanNoEColiOut1 . "_Abyss";
-my $abyssPE2 = $noHumanNoEColiOut2 . "_Abyss";
-my $abyssSE = $joinedQCed . "_Abyss";
+#blasting between baits and velvet-assembled contigs
+print "***** Blasting targets against assembled contigs *****.\n";
+my $contigsName = $sampleID . "_contigs";
+my $blastResults = $sampleID . "_baits_blasted_to_velvetContigs.txt";
+system("makeblastdb -in $pipeDir/data/clean_data/velvet/contigs.fa -dbtype nucl -title $contigsName -out $pipeDir/data/clean_data/blast/$contigsName");
+system("blastn -db $pipeDir/data/clean_data/blast/$contigsName -query singles.fasta -out $pipeDir/data/clean_data/blast/$blastResults");
+print "***** Finished blasting targets against assembled contigs *****.\n\n\n";
 
 
-print "***** Running de novo assembly of reads using multiple kmer and c and e values in Abyss *****.\n";
 
-my @abysskmer = qw(21 31 41 51 61);
-my @cevalue = qw(10 20);
+#########de novo assembly of reads into contigs using Abyss
+#########This section is based on a script by Mark Phuong
+########print "***** Revising sequence deflines for input into Abyss *****\n";
+########my @abyssFiles = ("$pipeDir/data/clean_data/$joinedQCed", "$pipeDir/data/clean_data/$$noHumanNoEColiOut1", "$pipeDir/data/clean_data/$$noHumanNoEColiOut2");
+########
+########foreach my $fileToRename (@abyssFiles) {
+########    open (my $fastqFH, "<", "$fileToRename") || die "Couldn't open file: $!.";
+########    open (my $fastqFH_Abyss, ">", "$fileToRename" . "_Abyss") || die "Couldn't open file: $!";
+########    while (my $line = <$fastqFH>) {
+########        if ($line =~ /\s\d:N:\d:\d$/) {
+########        $line =~ s/\s\d:N:\d:\d$/\/1/;
+########        }
+########        print $fastqFH_Abyss $line;
+########    }
+########    close ($fastqFH);
+########    close ($fastqFH_Abyss);
+########}
+########
+#########So we now have three output files:
+########my $abyssPE1 = $noHumanNoEColiOut1 . "_Abyss";
+########my $abyssPE2 = $noHumanNoEColiOut2 . "_Abyss";
+########my $abyssSE = $joinedQCed . "_Abyss";
+########
+########
+########print "***** Running de novo assembly of reads using multiple kmer and c and e values in Abyss *****.\n";
+########
+########my @abysskmer = qw(21 31 41 51 61);
+########my @cevalue = qw(10 20);
+########
+########foreach my $kmer (@abysskmer) {
+########    foreach my $ce (@cevalue) {
+########        print "***** Running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n";
+########        my $outfile = $sampleID . "_kmer" . $kmer . "_ce" . $ce;
+########        print "Command = abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'\n\n";
+########        system("abyss-pe np=4 name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'");
+########        print "***** Finished running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n\n"
+########    }
+########}
 
-foreach my $kmer (@abysskmer) {
-    foreach my $ce (@cevalue) {
-        print "***** Running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n";
-        my $outfile = $sampleID . "_kmer" . $kmer . "_ce" . $ce;
-        print "Command = abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'\n\n";
-        system("abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'");
-        print "***** Finished running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n\n"
-    }
-}
 
 #Code below by Mark shows how he cleans up extraneous files
 ####foreach my $kmer (@abysskmer) {
