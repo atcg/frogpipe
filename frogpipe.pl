@@ -162,11 +162,12 @@ system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_
 #de novo assembly of reads into contigs using Abyss
 #This section is based on a script by Mark Phuong
 print "***** Revising sequence deflines for input into Abyss *****\n";
-my @abyssFiles = ("$pipeDir/data/clean_data/$joinedQCed", "$pipeDir/data/clean_data/$$noHumanNoEColiOut1", "$pipeDir/data/clean_data/$$noHumanNoEColiOut2");
+my @abyssFiles = ("$pipeDir/data/clean_data/$joinedQCed", "$pipeDir/data/clean_data/$noHumanNoEColiOut1");
 
 foreach my $fileToRename (@abyssFiles) {
     open (my $fastqFH, "<", "$fileToRename") || die "Couldn't open file: $!.";
     open (my $fastqFH_Abyss, ">", "$fileToRename" . "_Abyss") || die "Couldn't open file: $!";
+    
     while (my $line = <$fastqFH>) {
         if ($line =~ /\s\d:N:\d:\d$/) {
         $line =~ s/\s\d:N:\d:\d$/\/1/;
@@ -176,6 +177,18 @@ foreach my $fileToRename (@abyssFiles) {
     close ($fastqFH);
     close ($fastqFH_Abyss);
 }
+
+open (my $fastq2FH, "<", "$pipeDir/data/clean_data/$noHumanNoEColiOut2") || die "Couldn't open file: $!.";
+open (my $fastq2FH_Abyss, ">", "$pipeDir/data/clean_data/$noHumanNoEColiOut2" . "_Abyss") || die "Couldn't open file: $!";
+while (my $line = <$fastq2FH>) {
+    if ($line =~ /\s\d:N:\d:\d$/) {
+    $line =~ s/\s\d:N:\d:\d$/\/2/;
+    }
+    print $fastq2FH_Abyss $line;
+}
+close ($fastq2FH);
+close ($fastq2FH_Abyss);
+
 
 #So we now have three output files:
 my $abyssPE1 = $noHumanNoEColiOut1 . "_Abyss";
@@ -193,7 +206,7 @@ foreach my $kmer (@abysskmer) {
         print "***** Running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n";
         my $outfile = $sampleID . "_kmer" . $kmer . "_ce" . $ce;
         print "Command = abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'\n\n";
-        system("abyss-pe np=4 name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'");
+        system("abyss-pe name=$pipeDir/data/ABYSS/$outfile k=$kmer c=$ce e=$ce in='$pipeDir/data/clean_data/$abyssPE1 $pipeDir/data/clean_data/$abyssPE2' se='$pipeDir/data/clean_data/$abyssSE'");
         print "***** Finished running Abyss for $sampleID reads at kmer = $kmer and c and e both = $ce *****\n\n\n"
     }
 }
