@@ -1,0 +1,6 @@
+Frogpipe To Do:
+
+-Read  the paper Muge found
+-velvet optimizer
+-look at brant's pipeline
+-fix adapter files for 3' contamination control

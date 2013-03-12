@@ -1,0 +1,23 @@
+21009:
+    -595 reference contigs blasted to the de novo assembled contigs
+
+120396:
+    -376 reference contigs blasted to the de novo assembled contigs
+    
+12821:
+    -896 reference contigs blasted to the de novo assembled contigs
+    
+121030:
+    -943 reference contigs blasted to the de novo assembled contigs
+    
+120379:
+    -762 reference contigs blasted to the de novo assembled contigs
+    
+19836:
+    -989 reference contigs blasted to the de novo assembled contigs
+    
+119884:
+    -987 reference contigs blasted to the de novo assembled contigs
+    
+19825:
+    -550 reference contigs blasted to the de novo assembled contigs
