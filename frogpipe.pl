@@ -100,9 +100,9 @@ print "***** Sample identifier: $sampleID *****\n\n\n\n";
 print "***** Running Scythe on each fastq file to clean up 3' ends for adapter contaminants *****\n";
 my $scytheOutputF = $fastqF . "_scythed";
 my $scytheOutputR = $fastqR . "_scythed";
-system("~/bin/scythe/scythe -a $adapterFile -q sanger -o $pipeDir/data/incremental/$scytheOutputF $fastqF");
+system("scythe -a $adapterFile -q sanger -o $pipeDir/data/incremental/$scytheOutputF $fastqF");
 print "\n";
-system("~/bin/scythe/scythe -a $adapterFile -q sanger -o $pipeDir/data/incremental/$scytheOutputR $fastqR");
+system("scythe -a $adapterFile -q sanger -o $pipeDir/data/incremental/$scytheOutputR $fastqR");
 print "***** Scythe finished running *****\n\n\n";
 
 # Run Sickle (https://github.com/ucdavis-bioinformatics/sickle)
@@ -111,7 +111,7 @@ my $sickleOutputPE_1 = $scytheOutputF . "_sickled";
 my $sickleOutputPE_2 = $scytheOutputR . "_sickled";
 my $sickleOutputSingles = $sampleID . "_scythed_sickled_singletons";
 print "***** Running Sickle on paired end files to trim to longest reads of acceptable quality *****\n";
-system("~/bin/sickle/sickle pe -f $pipeDir/data/incremental/$scytheOutputF -r $pipeDir/data/incremental/$scytheOutputR -q 20 -n -t sanger -o $pipeDir/data/incremental/$sickleOutputPE_1 -p $pipeDir/data/incremental/$sickleOutputPE_2 -s $pipeDir/data/incremental/$sickleOutputSingles");
+system("sickle pe -f $pipeDir/data/incremental/$scytheOutputF -r $pipeDir/data/incremental/$scytheOutputR -q 20 -n -t sanger -o $pipeDir/data/incremental/$sickleOutputPE_1 -p $pipeDir/data/incremental/$sickleOutputPE_2 -s $pipeDir/data/incremental/$sickleOutputSingles");
 print "***** Sickle finished running *****\n\n\n";
 
 
@@ -121,7 +121,7 @@ my $fastq_join_Output1 = $fastq_join_Output_Prefix . ".un1.fastq"; #this file wi
 my $fastq_join_Output2 = $fastq_join_Output_Prefix . ".un2.fastq"; #this file will be created below by fastq-join
 my $fastq_join_Output_JOINED = $fastq_join_Output_Prefix . ".join.fastq"; #this file will be created below by fastq-join
 print "***** Running fastq-join on paired end files to merge overlapping paired-end reads (in case some fragments were shorter than 2x read length) *****\n";
-system("~/bin/ea-utils/fastq-join $pipeDir/data/incremental/$sickleOutputPE_1 $pipeDir/data/incremental/$sickleOutputPE_2 -o $pipeDir/data/incremental/$fastq_join_Output_Prefix.%.fastq -m 15 -p 1");
+system("fastq-join $pipeDir/data/incremental/$sickleOutputPE_1 $pipeDir/data/incremental/$sickleOutputPE_2 -o $pipeDir/data/incremental/$fastq_join_Output_Prefix.%.fastq -m 15 -p 1");
 print "***** Fastq-join finished running *****\n\n\n";
 
 #So at this point, we have several useful QC'ed files (filenames below assume usage example from line 9 above).
@@ -163,15 +163,15 @@ my $noHumanNoEColiOut2 = $noHumanNoEColiPairs . ".2";
 
 my $genomeDir = $ENV{'BOWTIE2_INDEXES'};
 print "***** Checking to see if reads align to the human genome to remove contaminants ****\n";
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/incremental/$noHumanReadsSingles --al $pipeDir/data/incremental/$humanReadsSingles -x $genomeDir/hg19 -U $pipeDir/data/incremental/$sickleOutputSingles -S $pipeDir/data/sam/$singlesNoHumanSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/incremental/$noHumanReadsJoined --al $pipeDir/data/incremental/$humanReadsJoined -x $genomeDir/hg19 -U $pipeDir/data/incremental/$fastq_join_Output_JOINED -S $pipeDir/data/sam/$joinedNoHumanSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc $pipeDir/data/incremental/$noHumanReadsPairs --al-conc $pipeDir/data/incremental/$humanReadsPairs -x $genomeDir/hg19 -1 $pipeDir/data/incremental/$fastq_join_Output1 -2 $pipeDir/data/incremental/$fastq_join_Output2 -S $pipeDir/data/sam/$pairsNoHumanSam");
+system("bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/incremental/$noHumanReadsSingles --al $pipeDir/data/incremental/$humanReadsSingles -x $genomeDir/hg19 -U $pipeDir/data/incremental/$sickleOutputSingles -S $pipeDir/data/sam/$singlesNoHumanSam");
+system("bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/incremental/$noHumanReadsJoined --al $pipeDir/data/incremental/$humanReadsJoined -x $genomeDir/hg19 -U $pipeDir/data/incremental/$fastq_join_Output_JOINED -S $pipeDir/data/sam/$joinedNoHumanSam");
+system("bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc $pipeDir/data/incremental/$noHumanReadsPairs --al-conc $pipeDir/data/incremental/$humanReadsPairs -x $genomeDir/hg19 -1 $pipeDir/data/incremental/$fastq_join_Output1 -2 $pipeDir/data/incremental/$fastq_join_Output2 -S $pipeDir/data/sam/$pairsNoHumanSam");
 print "***** Finished checking for human contaminants *****\n\n\n";
 
 print "***** Checking to see if reads align to the E. coli genome to remove contaminants *****\n";
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiSingles --al $pipeDir/data/incremental/$noHumanYesEColiSingles -x $genomeDir/ecoliK12 -U $pipeDir/data/incremental/$noHumanReadsSingles -S $pipeDir/data/sam/$singlesNoHumanNoEColiSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiJoined --al $pipeDir/data/incremental/$noHumanYesEColiJoined -x $genomeDir/ecoliK12 -U $pipeDir/data/incremental/$noHumanReadsJoined -S $pipeDir/data/sam/$joinedNoHumanNoEColiSam");
-system("~/bin/bowtie2-2.0.6/bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc $pipeDir/data/clean_data/$noHumanNoEColiPairs --al-conc $pipeDir/data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/ecoliK12 -1 $pipeDir/data/incremental/$noHumanReadsPairsOut1 -2 $pipeDir/data/incremental/$noHumanReadsPairsOut2 -S $pipeDir/data/sam/$pairsNoHumanNoEColiSam");
+system("bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiSingles --al $pipeDir/data/incremental/$noHumanYesEColiSingles -x $genomeDir/ecoliK12 -U $pipeDir/data/incremental/$noHumanReadsSingles -S $pipeDir/data/sam/$singlesNoHumanNoEColiSam");
+system("bowtie2 -q --phred33 --threads 7 --un $pipeDir/data/clean_data/$noHumanNoEColiJoined --al $pipeDir/data/incremental/$noHumanYesEColiJoined -x $genomeDir/ecoliK12 -U $pipeDir/data/incremental/$noHumanReadsJoined -S $pipeDir/data/sam/$joinedNoHumanNoEColiSam");
+system("bowtie2 -q --phred33 --minins 0 --maxins 2000 --no-mixed --no-discordant --threads 7 --un-conc $pipeDir/data/clean_data/$noHumanNoEColiPairs --al-conc $pipeDir/data/incremental/$noHumanYesEColiReadsPairs -x $genomeDir/ecoliK12 -1 $pipeDir/data/incremental/$noHumanReadsPairsOut1 -2 $pipeDir/data/incremental/$noHumanReadsPairsOut2 -S $pipeDir/data/sam/$pairsNoHumanNoEColiSam");
 print "***** Finished checking for E. coli contaminants *****\n\n\n";
 
 #merge joined and singleton reads into a single file
@@ -182,18 +182,19 @@ system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_
 #de novo assembly of reads into contigs using velvet
 print "***** Running de novo assembly of reads using velvet *****.\n";
 
-system("~/bin/velvet/velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
-system("~/bin/velvet/velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
+system("velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
+system("velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
 print "***** Finished running velvet *****.\n\n\n";
 
-#Get some read depth summary stats from AMOS
-print "***** Generating summary statistics for read depth using AMOS *****.\n";
-my $AMOS_file = "velvet_asm.afg"; #This is automatically created by the
-my $BNK_file = $sampleID . ".bnk";
-system("~/bin/amos-3.1.0/bin/bank-transact -m $pipeDir/data/clean_data/velvet/$AMOS_file -b $pipeDir/data/clean_data/velvet/$BNK_file -c");
-system("~/bin/amos-3.1.0/bin/analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d");
-#system("analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d"); #this would give coverage for each contigs
-print "***** Finished generating summary statistics for read depth using AMOS *****.\n\n\n";
+# Hold off on the AMOS for now until I understand how to use it a little better
+## #Get some read depth summary stats from AMOS
+## print "***** Generating summary statistics for read depth using AMOS *****.\n";
+## my $AMOS_file = "velvet_asm.afg"; #This is automatically created by the
+## my $BNK_file = $sampleID . ".bnk";
+## system("~/bin/amos-3.1.0/bin/bank-transact -m $pipeDir/data/clean_data/velvet/$AMOS_file -b $pipeDir/data/clean_data/velvet/$BNK_file -c");
+## system("~/bin/amos-3.1.0/bin/analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d");
+## #system("analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d"); #this would give coverage for each contigs
+## print "***** Finished generating summary statistics for read depth using AMOS *****.\n\n\n";
 
 
 #blasting between baits and velvet-assembled contigs
