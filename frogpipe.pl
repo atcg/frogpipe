@@ -14,6 +14,7 @@
 #   -sickle
 #   -scythe
 #   -blast+
+#   -bowtie2
 
 #To do:
 #   -remove duplicate reads (?)
@@ -181,8 +182,8 @@ system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_
 #de novo assembly of reads into contigs using velvet
 print "***** Running de novo assembly of reads using velvet *****.\n";
 
-system("~/bin/velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
-system("~/bin/velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
+system("~/bin/velvet/velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
+system("~/bin/velvet/velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
 print "***** Finished running velvet *****.\n\n\n";
 
 #Get some read depth summary stats from AMOS
