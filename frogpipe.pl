@@ -20,6 +20,11 @@
 #   -remove duplicate reads (?)
 #   -remove low complexity reads
 #   -make sure ea-utils is in ea-utils folder
+# Recompile velvet for higher kmer value (96)
+# Look at LASSE
+# Remove contigs that align to multiple targets
+# Read depth from
+# Velvet optimizer default is to optimize for extremely long contigs--optimize for number of contigs and n50 for those contigs
 
 
 use strict;
@@ -92,6 +97,10 @@ print "***** Sample identifier: $sampleID *****\n\n\n\n";
 
 #Remove redundant and low-complexity reads (while maintaining the integrity of mate pairs)
 
+
+
+#Look at default probability of scythe
+#Drop anything with N's
 
 
 
