@@ -25,6 +25,7 @@
 # Remove contigs that align to multiple targets
 # Read depth from
 # Velvet optimizer default is to optimize for extremely long contigs--optimize for number of contigs and n50 for those contigs
+#    --does this mean set optFuncKmer=n50 * ncon
 
 
 use strict;
@@ -191,9 +192,14 @@ system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_
 #de novo assembly of reads into contigs using velvet
 print "***** Running de novo assembly of reads using velvet *****.\n";
 
-system("velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
-system("velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
-print "***** Finished running velvet *****.\n\n\n";
+  # Velvet optimizer
+
+system("VelvetOptimiser.pl -v -s 20 -e 128 -f '-short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' -t 8 optFuncKmer 'n50*ncon'");
+
+#run velvet
+#    system("velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
+#    system("velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
+#    print "***** Finished running velvet *****.\n\n\n";
 
 # Hold off on the AMOS for now until I understand how to use it a little better
 ## #Get some read depth summary stats from AMOS
@@ -206,13 +212,13 @@ print "***** Finished running velvet *****.\n\n\n";
 ## print "***** Finished generating summary statistics for read depth using AMOS *****.\n\n\n";
 
 
-#blasting between baits and velvet-assembled contigs
-print "***** Blasting targets against assembled contigs *****.\n";
-my $contigsName = $sampleID . "_contigs";
-my $blastResults = $sampleID . "_baits_blasted_to_velvetContigs.txt";
-system("makeblastdb -in $pipeDir/data/clean_data/velvet/contigs.fa -dbtype nucl -title $contigsName -out $pipeDir/data/clean_data/blast/$contigsName");
-system("blastn -db $pipeDir/data/clean_data/blast/$contigsName -query singles.fasta -out $pipeDir/data/clean_data/blast/$blastResults");
-print "***** Finished blasting targets against assembled contigs *****.\n\n\n";
+### #blasting between baits and velvet-assembled contigs
+### print "***** Blasting targets against assembled contigs *****.\n";
+### my $contigsName = $sampleID . "_contigs";
+### my $blastResults = $sampleID . "_baits_blasted_to_velvetContigs.txt";
+### system("makeblastdb -in $pipeDir/data/clean_data/velvet/contigs.fa -dbtype nucl -title $contigsName -out $pipeDir/data/clean_data/blast/$contigsName");
+### system("blastn -db $pipeDir/data/clean_data/blast/$contigsName -query singles.fasta -out $pipeDir/data/clean_data/blast/$blastResults");
+### print "***** Finished blasting targets against assembled contigs *****.\n\n\n";
 
 
 
