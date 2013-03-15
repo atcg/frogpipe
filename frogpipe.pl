@@ -193,8 +193,13 @@ system("cat $pipeDir/data/clean_data/$noHumanNoEColiSingles $pipeDir/data/clean_
 print "***** Running de novo assembly of reads using velvet *****.\n";
 
   # Velvet optimizer
+my $velvet_optimizer_prefix = $sampleID . "_velvetopt";
+system("VelvetOptimiser.pl -v -s 20 -e 200 -f '-short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' -t 8 -k 'Lcon' -c 'Lbp' -p $velvet_optimizer_prefix -d $pipeDir/data/clean_data/velvet_optimizer -a"); #try setting genome size to around -g 5 for 5 megabases (total target regions > 2mb)
 
-system("VelvetOptimiser.pl -v -s 20 -e 128 -f '-short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' -t 8 optFuncKmer 'n50*ncon'");
+#just tried n50+log(ncon)
+#best so far is 'Lbp*n50*Lcon*ncon'
+#next try just Lcon and/or Lbp
+
 
 #run velvet
 #    system("velveth $pipeDir/data/clean_data/velvet 31 -short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2");
