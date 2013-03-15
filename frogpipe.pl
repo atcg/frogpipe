@@ -194,11 +194,13 @@ print "***** Running de novo assembly of reads using velvet *****.\n";
 
   # Velvet optimizer
 my $velvet_optimizer_prefix = $sampleID . "_velvetopt";
-system("VelvetOptimiser.pl -v -s 20 -e 200 -f '-short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' -t 8 -k 'Lcon' -c 'Lbp' -p $velvet_optimizer_prefix -d $pipeDir/data/clean_data/velvet_optimizer -a"); #try setting genome size to around -g 5 for 5 megabases (total target regions > 2mb)
+system("VelvetOptimiser.pl -v -s 20 -e 200 -f '-short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' -t 8 -k 'n50*ncon' -c 'Lbp' -p $velvet_optimizer_prefix -d $pipeDir/data/clean_data/velvet_optimizer -a -t 6"); #try setting genome size to around -g 5 for 5 megabases (total target regions > 2mb)
 
 #just tried n50+log(ncon)
-#best so far is 'Lbp*n50*Lcon*ncon'
-#next try just Lcon and/or Lbp
+#best so far is 'Lbp*n50*Lcon*ncon'--around 30k
+#Lbp*n50*Lcon*ncon+log(tbp)--30,317
+#Lcon*n50*Lbp--48
+#next try just Lbp
 
 
 #run velvet
@@ -206,24 +208,25 @@ system("VelvetOptimiser.pl -v -s 20 -e 200 -f '-short -fastq $pipeDir/data/clean
 #    system("velvetg $pipeDir/data/clean_data/velvet -exp_cov auto -cov_cutoff auto -amos_file yes");
 #    print "***** Finished running velvet *****.\n\n\n";
 
-# Hold off on the AMOS for now until I understand how to use it a little better
-## #Get some read depth summary stats from AMOS
-## print "***** Generating summary statistics for read depth using AMOS *****.\n";
-## my $AMOS_file = "velvet_asm.afg"; #This is automatically created by the
-## my $BNK_file = $sampleID . ".bnk";
-## system("~/bin/amos-3.1.0/bin/bank-transact -m $pipeDir/data/clean_data/velvet/$AMOS_file -b $pipeDir/data/clean_data/velvet/$BNK_file -c");
-## system("~/bin/amos-3.1.0/bin/analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d");
-## #system("analyze-read-depth $pipeDir/data/clean_data/velvet/$BNK_file -d"); #this would give coverage for each contigs
-## print "***** Finished generating summary statistics for read depth using AMOS *****.\n\n\n";
+###   # Hold off on the AMOS for now until I understand how to use it a little better
+###   #Get some read depth summary stats from AMOS
+###   print "***** Generating summary statistics for read depth using AMOS *****.\n";
+###   my $AMOS_file = "velvet_asm.afg"; #This is automatically created by the
+###   my $BNK_file = $sampleID . ".bnk";
+###   my $coverage_stats = $sampleID . "coverage_stats.txt";
+###   system("bank-transact -m $pipeDir/data/clean_data/velvet_optimizer/$AMOS_file -b $pipeDir/data/clean_data/velvet_optimizer/$BNK_file -c");
+###   system("analyze-read-depth $pipeDir/data/clean_data/velvet_optimizer/$BNK_file -d");
+###   system("cvgStat -b $pipeDir/data/clean_data/velvet_optimizer/$BNK_file > $pipeDire/data/clean_data/velvet_optimizer/$coverage_stats");
+###   ## print "***** Finished generating summary statistics for read depth using AMOS *****.\n\n\n";
 
 
-### #blasting between baits and velvet-assembled contigs
-### print "***** Blasting targets against assembled contigs *****.\n";
-### my $contigsName = $sampleID . "_contigs";
-### my $blastResults = $sampleID . "_baits_blasted_to_velvetContigs.txt";
-### system("makeblastdb -in $pipeDir/data/clean_data/velvet/contigs.fa -dbtype nucl -title $contigsName -out $pipeDir/data/clean_data/blast/$contigsName");
-### system("blastn -db $pipeDir/data/clean_data/blast/$contigsName -query singles.fasta -out $pipeDir/data/clean_data/blast/$blastResults");
-### print "***** Finished blasting targets against assembled contigs *****.\n\n\n";
+#blasting between baits and velvet-assembled contigs
+print "***** Blasting targets against assembled contigs *****.\n";
+my $contigsName = $sampleID . "_contigs";
+my $blastResults = $sampleID . "_baits_blasted_to_velvetContigs.txt";
+system("makeblastdb -in $pipeDir/data/clean_data/velvet_optimizer/contigs.fa -dbtype nucl -title $contigsName -out $pipeDir/data/clean_data/blast/$contigsName");
+system("blastn -db $pipeDir/data/clean_data/blast/$contigsName -query singles.fasta -out $pipeDir/data/clean_data/blast/$blastResults");
+print "***** Finished blasting targets against assembled contigs *****.\n\n\n";
 
 
 
