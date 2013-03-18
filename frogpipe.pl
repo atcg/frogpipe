@@ -200,7 +200,6 @@ system("VelvetOptimiser.pl -v -s 20 -e 200 -f '-short -fastq $pipeDir/data/clean
 #best so far is 'Lbp*n50*Lcon*ncon'--around 30k
 #Lbp*n50*Lcon*ncon+log(tbp)--30,317
 #Lcon*n50*Lbp--48
-#next try just Lbp
 
 
 #run velvet
