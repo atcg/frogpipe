@@ -1,6 +1,11 @@
 Frogpipe To Do:
 
--Read  the paper Muge found
--velvet optimizer
--look at brant's pipeline
--fix adapter files for 3' contamination control
+-Optimize the optimizer function for... velvet optimizer
+    -or just give up around 30k
+-Get coverage stats working
+-Look at LASTZ in place of blast: http://www.bx.psu.edu/miller_lab/dist/README.lastz-1.02.00/README.lastz-1.02.00a.html
+-Look at brant's pipeline
+-Fix adapter files for 3' contamination control
+-Write shell script to run all samples (fastq pairs) in a folder--move results to data drives before running new analysis
+
+-Demultiplex the large unassigned dataset?
