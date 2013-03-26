@@ -194,12 +194,41 @@ print "***** Running de novo assembly of reads using velvet *****.\n";
 
   # Velvet optimizer
 my $velvet_optimizer_prefix = $sampleID . "_velvetopt";
-system("VelvetOptimiser.pl -v -s 20 -e 200 -f '-short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' -t 8 -k 'Lbp*n50*Lcon*ncon' -c 'Lbp' -p $velvet_optimizer_prefix -d $pipeDir/data/clean_data/velvet_optimizer -a -t 6"); #try setting genome size to around -g 5 for 5 megabases (total target regions > 2mb)
-
+system("VelvetOptimiser.pl -v -s 20 -e 200 -f '-short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' -k 'Lbp*n50*Lcon*ncon' -c 'Lbp' -p $velvet_optimizer_prefix -d $pipeDir/data/clean_data/velvet_optimizer -a -t 4"); #try setting genome size to around -g 5 for 5 megabases (total target regions > 2mb)
 
 #best so far is 'Lbp*n50*Lcon*ncon'--around 30k
 #Lbp*n50*Lcon*ncon+log(tbp)--30,317
 #Lcon*n50*Lbp--48
+
+
+#rename contigs--both the file name and the contigs themselves
+my $newContigsFileName = $sampleID . "_velvet_contigs.fa";
+my $newContigsRenamedFileName = $sampleID . "_velvet_assembled_contigs_renamed.fa";
+
+print "***** Renaming velvet contigs file (and the contigs inside of it to prefix them with SampleID) *****\n";
+system("perl bin/rename_velvet_contigs.pl --in $pipeDir/data/clean_data/velvet_optimizer/contigs.fa --out $pipeDir/data/clean_data/velvet_optimizer/$newContigsRenamedFileName --sample $sampleID");
+print "***** Finished renaming velvet contigs file (and the contigs themselves). *****\n";
+
+
+#blasting between baits and velvet-assembled contigs
+print "***** Blasting targets against assembled contigs *****.\n";
+my $contigsName = $sampleID . "_contigs";
+my $blastResults = $sampleID . "_baits_blasted_to_velvetContigs.txt";
+system("makeblastdb -in $pipeDir/data/clean_data/velvet_optimizer/$newContigsRenamedFileName -dbtype nucl -title $contigsName -out $pipeDir/data/clean_data/blast/$contigsName");
+system("blastn -db $pipeDir/data/clean_data/blast/$contigsName -query singles.fasta -out $pipeDir/data/clean_data/blast/$blastResults");
+print "***** Finished blasting targets against assembled contigs *****.\n\n\n";
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #run velvet
@@ -217,15 +246,6 @@ system("VelvetOptimiser.pl -v -s 20 -e 200 -f '-short -fastq $pipeDir/data/clean
 ###   system("analyze-read-depth $pipeDir/data/clean_data/velvet_optimizer/$BNK_file -d");
 ###   system("cvgStat -b $pipeDir/data/clean_data/velvet_optimizer/$BNK_file > $pipeDire/data/clean_data/velvet_optimizer/$coverage_stats");
 ###   ## print "***** Finished generating summary statistics for read depth using AMOS *****.\n\n\n";
-
-
-#blasting between baits and velvet-assembled contigs
-print "***** Blasting targets against assembled contigs *****.\n";
-my $contigsName = $sampleID . "_contigs";
-my $blastResults = $sampleID . "_baits_blasted_to_velvetContigs.txt";
-system("makeblastdb -in $pipeDir/data/clean_data/velvet_optimizer/contigs.fa -dbtype nucl -title $contigsName -out $pipeDir/data/clean_data/blast/$contigsName");
-system("blastn -db $pipeDir/data/clean_data/blast/$contigsName -query singles.fasta -out $pipeDir/data/clean_data/blast/$blastResults");
-print "***** Finished blasting targets against assembled contigs *****.\n\n\n";
 
 
 

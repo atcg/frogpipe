@@ -1,5 +1,0 @@
-velveth velvet_assembly 31 -shortPaired -separate -fastq 21009pairs_noHuman_noEColi.1 21009pairs_noHuman_noEColi.2
-velvetg velvet_assembly -exp_cov auto -cov_cutoff auto
-
-velveth velvet_assembly_all 31 -short -fastq 21009scythed_sickled_nohuman_noecoli_combined_joined_and_singletons.fastq -shortPaired2 -separate -fastq 21009pairs_noHuman_noEColi.1 21009pairs_noHuman_noEColi.2
-velvetg velvet_assembly_all -exp_cov auto -cov_cutoff auto
