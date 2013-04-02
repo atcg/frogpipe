@@ -194,7 +194,7 @@ print "***** Running de novo assembly of reads using velvet *****.\n";
 
   # Velvet optimizer
 my $velvet_optimizer_prefix = $sampleID . "_velvetopt";
-system("VelvetOptimiser.pl -v -s 20 -e 200 -f '-short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' -k 'Lbp*n50*Lcon*ncon' -c 'Lbp' -p $velvet_optimizer_prefix -d $pipeDir/data/clean_data/velvet_optimizer -a -t 4"); #try setting genome size to around -g 5 for 5 megabases (total target regions > 2mb)
+system("VelvetOptimiser.pl -v -s 100 -e 200 -f '-short -fastq $pipeDir/data/clean_data/$joinedQCed -shortPaired2 -separate -fastq $pipeDir/data/clean_data/$noHumanNoEColiOut1 $pipeDir/data/clean_data/$noHumanNoEColiOut2' -k 'ncon' -c 'Lbp' -p $velvet_optimizer_prefix -d $pipeDir/data/clean_data/velvet_optimizer -a -t 4"); #try setting genome size to around -g 5 for 5 megabases (total target regions > 2mb)
 
 #best so far is 'Lbp*n50*Lcon*ncon'--around 30k
 #Lbp*n50*Lcon*ncon+log(tbp)--30,317
