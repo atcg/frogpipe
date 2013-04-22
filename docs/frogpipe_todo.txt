@@ -15,3 +15,8 @@ Frogpipe To Do:
     -deflines of contigs should start with sampleID___ or something else that is easy to find w/ regex
     
 -Implement GATK for calling SNPs
+
+
+
+-Subsetting matrices into 8 samples, 7 samples, 6 samples, etc...
+-Alignments to reference (targets)
