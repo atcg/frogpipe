@@ -21,3 +21,9 @@ Only pull out draytonii matches
 Require longer blast homologous regions
 Blasting to baits instead of targets
 Blast baitset against xenopus to look for multiple region hits
+
+
+
+-Subsetting matrices into 8 samples, 7 samples, 6 samples, etc...
+-Alignments to reference (targets)
+

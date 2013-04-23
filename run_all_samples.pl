@@ -90,17 +90,31 @@ foreach my $finalSample (@sample_numbers_to_run) {
 # }
 
 while ((my $key, my $value) = each(%runHash)) {
+    print "Running sample $key\n";
+    print "Command: perl frogpipe.pl -a @{$runHash{$key}}[2] -f @{$runHash{$key}}[0] -r @{$runHash{$key}}[1] -s $key > $key.log 2>&1\n";
     system("perl frogpipe.pl -a @{$runHash{$key}}[2] -f @{$runHash{$key}}[0] -r @{$runHash{$key}}[1] -s $key > $key.log 2>&1");    
 }
+print "Finished running frogpipe.pl on all samples. \n";
 
+# Now need to define things for blast_to_matrix.pl
+# It needs --blasts, --targets, --contigs, and --out
 
+my @blasts;
+my $targets;
+my @contigs;
+my $blast2matrixout;
 
+print "Creating data matrices from frogpipe.pl output.\n";
+foreach my $runSample (@sample_numbers_to_run) {
+    my $tempBlastFile = $runSample . "_piped/data/clean_data/blast/$runSample" . "_baits_blasted_to_velvetContigs.txt";
+    my $tempContigFile = $runSample . "_piped/data/clean_data/velvet_optimizer/$runSample" . "_velvet_assembled_contigs_renamed.fa";
+    push (@blasts, $tempBlastFile);
+    push (@contigs, $tempContigFile);
+}
+my @sortedBlasts = sort(@blasts);
+my @sortedContigs = sort(@contigs);
+my $blastsFilesString = join(",", @sortedBlasts);
+my $contigsFilesString = join(",", @sortedContigs);
 
-
-
-
-
-
-
-
-#system("perl blast_to_matrix.pl ....")
+system("perl blast_2_matrix.pl --blasts $blastsFilesString --targets singles.fasta --contigs $contigsFilesString --out alignments")
+print "Matrix creation completed. Done!\n";
