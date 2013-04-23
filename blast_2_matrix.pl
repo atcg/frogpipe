@@ -186,42 +186,36 @@ foreach my $sampleHash ( @anonymousBlastResultsArray ) {
     }    
 }
 
+my $FilledDirectory = "alignments";
 
+opendir(my $DIR_HANDLE, $FilledDirectory) or die $!;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# foreach my $key ( keys %{$anonymousBlastResultsArray[0]} )  {
-#     print "Target: $key\n";
-#     print "\tHits:\n";
-#     foreach my $contigHit (@{$anonymousBlastResultsArray[0]{$key}}) {
-#         print "\t\t$contigHit\n";
-#     }
-# }
-
-
-
-
-
-
+while (my $contigFile = readdir($DIR_HANDLE)) {
+    next if $contigFile =~ /DS_Store/ or $contigFile =~ /subset_alignments.pl/;
+    my %resultsHash;
+    open (my $indContigFile, "<", $contigFile);
+    while (my $line = <$indContigFile>) {
+        # add sample number as a hash key if it doesn't exist
+        if ($line =~ /^>sample_(\d+).*/) {
+            if (!exists $resultsHash{$!}) {
+                $resultsHash{$1} = 1;
+            } else {
+                $resultsHash{$1}++;
+            }
+        }
+    }
+    # If %resultsHash has a certain number of hash keys, then spit that contig
+    # file into a new folder
+    my $num_winners = scalar(keys %resultsHash);
+    unless (-d $num_winners) {
+        mkdir $num_winners;
+    }
+    close $indContigFile;
+    my $oldlocation = "$contigFile";
+    my $newlocation = "$num_winners/$contigFile";
+    move($oldlocation, $newlocation);
+}
+closedir($DIR_HANDLE);
 
 
 

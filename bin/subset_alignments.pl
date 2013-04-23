@@ -2,17 +2,20 @@
 
 use strict;
 use warnings;
+use File::Copy;
 use Getopt::Long;
 
-my $directory;
+my $directory = ".";
 
 GetOptions ("dir=s" => \$directory);
 
 opendir(my $DIR_HANDLE, $directory) or die $!;
 
 while (my $contigFile = readdir($DIR_HANDLE)) {
+    next if $contigFile =~ /DS_Store/ or $contigFile =~ /subset_alignments.pl/;
     my %resultsHash;
-    while (my $line = <$contigFile>) {
+    open (my $indContigFile, "<", $contigFile);
+    while (my $line = <$indContigFile>) {
         # add sample number as a hash key if it doesn't exist
         if ($line =~ /^>sample_(\d+).*/) {
             if (!exists $resultsHash{$!}) {
@@ -28,9 +31,13 @@ while (my $contigFile = readdir($DIR_HANDLE)) {
     unless (-d $num_winners) {
         mkdir $num_winners;
     }
-        
-        
-        
+    close $indContigFile;
+    my $oldlocation = "$contigFile";
+    my $newlocation = "$num_winners/$contigFile";
+    move($oldlocation, $newlocation);
 }
 closedir($DIR_HANDLE);
+
+
+
 
