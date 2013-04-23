@@ -15,3 +15,9 @@ Frogpipe To Do:
     -deflines of contigs should start with sampleID___ or something else that is easy to find w/ regex
     
 -Implement GATK for calling SNPs
+
+***
+Only pull out draytonii matches
+Require longer blast homologous regions
+Blasting to baits instead of targets
+Blast baitset against xenopus to look for multiple region hits
