@@ -117,5 +117,5 @@ my @sortedContigs = sort(@contigs);
 my $blastsFilesString = join(",", @sortedBlasts);
 my $contigsFilesString = join(",", @sortedContigs);
 
-system("perl blast_2_matrix.pl --blasts $blastsFilesString --targets singles.fasta --contigs $contigsFilesString --out alignments")
+system("perl blast_2_matrix.pl --blasts $blastsFilesString --targets singles.fasta --contigs $contigsFilesString --out alignments");
 print "Matrix creation completed. Done!\n";

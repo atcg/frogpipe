@@ -207,7 +207,7 @@ my $newContigsRenamedFileName = $sampleID . "_velvet_assembled_contigs_renamed.f
 
 print "***** Renaming velvet contigs file (and the contigs inside of it to prefix them with SampleID) *****\n";
 system("perl bin/rename_velvet_contigs.pl --in $pipeDir/data/clean_data/velvet_optimizer/contigs.fa --out $pipeDir/data/clean_data/velvet_optimizer/$newContigsRenamedFileName --sample $sampleID");
-print "***** Finished renaming velvet contigs file (and the contigs themselves). *****\n";
+print "***** Finished renaming velvet contigs file (and the contigs themselves). *****\n";  
 
 
 #blasting between baits and velvet-assembled contigs
